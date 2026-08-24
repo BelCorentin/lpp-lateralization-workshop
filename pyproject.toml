@@ -1,0 +1,28 @@
+[project]
+name = "lpp-lateralization-workshop"
+version = "0.1.0"
+description = "Hands-on: LLM->fMRI encoding and left-hemisphere lateralization on Le Petit Prince (average subject)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "neuralset>=0.2.3",
+    "neuralfetch>=0.2.3",
+    "transformers>=5.0",
+    "nilearn>=0.11",
+    "praatio>=6.0",
+    "scikit-learn>=1.5",
+    "pandas>=2.2",
+    "matplotlib>=3.8",
+    "ipykernel>=6.29",
+]
+
+[project.optional-dependencies]
+# Static-embedding (spaCy) baseline; also needs `python -m spacy download en_core_web_md`
+spacy = ["spacy>=3.8"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["lppws"]
