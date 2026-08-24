@@ -176,8 +176,13 @@ def encode_corr(
     bold: dict[str, np.ndarray],
     *,
     alphas: np.ndarray = ALPHAS,
+    per_fold: bool = False,
 ) -> np.ndarray:
-    """Leave-one-run-out ridge encoding; returns per-voxel Pearson r (n_voxels,).
+    """Leave-one-run-out ridge encoding; per-voxel Pearson r.
+
+    Returns ``(n_voxels,)`` averaged over folds, or ``(n_runs, n_voxels)`` when
+    ``per_fold=True`` — the per-fold maps are what you need for an error bar
+    that is not a bootstrap over (correlated) voxels.
 
     The ridge penalty is selected by RidgeCV *inside* the training runs only, so
     the held-out run is never used for model selection.
@@ -189,7 +194,7 @@ def encode_corr(
         model = RidgeCV(alphas=alphas).fit(np.vstack(xs), np.vstack(ys))
         xte, yte = _align(X[test_tl], bold[test_tl])
         r[i] = _corr(model.predict(xte), yte)
-    return r.mean(0)
+    return r if per_fold else r.mean(0)
 
 
 # --------------------------------------------------------------------------
@@ -254,3 +259,36 @@ def add_running_context(
             ctx.at[i] = " ".join(buf[-n_words:])
     events["context"] = ctx
     return events
+
+
+def across_run_ci(
+    r_folds: np.ndarray, brain: Brain, subset: np.ndarray | None = None
+) -> dict[str, float]:
+    """Mean paired lateralization with a spread taken *across runs*.
+
+    ``r_folds`` is the ``(n_runs, n_voxels)`` output of ``encode_corr(...,
+    per_fold=True)``. For each held-out run we average
+    ``r(left) - r(right homolog)`` over the voxels of interest, then report the
+    mean and a t-based 95% interval over those n_runs values.
+
+    This is a far more honest error bar than a bootstrap over voxels, which
+    treats 430 spatially smooth voxels as 430 independent observations. It is
+    still not a clean test — leave-one-run-out folds share 8/9 of their training
+    data — so read it as "how much does this move between runs", not as a
+    p-value.
+    """
+    from scipy import stats
+
+    per_run = np.array(
+        [paired_lateralization(r, brain, subset).mean() for r in r_folds]
+    )
+    n = per_run.size
+    sem = per_run.std(ddof=1) / np.sqrt(n)
+    half = stats.t.ppf(0.975, n - 1) * sem
+    return dict(
+        mean=float(per_run.mean()),
+        lo=float(per_run.mean() - half),
+        hi=float(per_run.mean() + half),
+        n_runs=n,
+        runs_positive=int((per_run > 0).sum()),
+    )
