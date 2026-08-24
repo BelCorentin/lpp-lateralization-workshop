@@ -49,7 +49,7 @@ gpt2, contextual, sweeping the relative layer depth:
 
 | layer | mean r | LI global | LI lang |
 |---|---|---|---|
-| 1/3 | 0.0367 | +0.0045 | +0.0045 |
+| 1/3 (0.3333) | 0.0367 | +0.0045 | +0.0045 |
 | 2/3 | 0.0180 | +0.0005 | −0.0019 |
 | 1.0 (last) | 0.0248 | +0.0020 | −0.0080 |
 
@@ -84,6 +84,10 @@ The whole-brain effect is the one that survives:
 | pythia-410m ctx | +0.0050 [+0.0012, +0.0088] | 8/9 |
 | gpt2 ctx layer 1/3 | +0.0045 [+0.0007, +0.0083] | 8/9 |
 | gpt2 static | +0.0034 [+0.0003, +0.0064] | 6/9 |
+
+Raw measurements are in `results/`. (The notebook passes `1/3` exactly rather
+than `0.3333`, which lands on a marginally different layer weighting: mean r
+0.0365, LI lang +0.0042 — same conclusion.)
 
 ## Summary
 

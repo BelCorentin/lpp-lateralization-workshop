@@ -73,6 +73,11 @@ about three times the disk, because git stores every file a second time inside
 jupyter lab notebooks/lpp_lateralization.ipynb
 ```
 
+`notebooks/lpp_lateralization.executed.ipynb` is the same notebook with every
+output filled in, so you can see where you should be landing before running
+anything. **Read `RESULTS.md` before presenting any of this** — the headline
+replicates, the scaling claim does not, and the reason matters.
+
 or, headless, the same analysis as a script:
 
 ```bash
@@ -87,7 +92,11 @@ python verify.py '[["pythia-70m","EleutherAI/pythia-70m",true]]'
 | `lppws/study.py` | `Li2022PetitAverage` — the average subject as a `neuralset` `Study`, plus the data downloader |
 | `lppws/pipeline.py` | masking, HRF-convolved LLM features, leave-one-run-out ridge, lateralization metrics |
 | `notebooks/lpp_lateralization.ipynb` | the guided workshop notebook |
-| `verify.py` | headless end-to-end run, writes `verify_results.json` |
+| `verify.py` | headless end-to-end run of any model list |
+| `verify2.py` | same, keeping the per-run maps (for the across-run error bar) |
+| `RESULTS.md` | what the pipeline actually produced here, with the numbers |
+| `results/` | the raw measurements behind `RESULTS.md` |
+| `notebooks/lpp_lateralization.executed.ipynb` | the same notebook with all outputs, as a reference run |
 
 `Li2022PetitAverage` lives here rather than inside `neuralfetch` because the
 published `neuralfetch` only ships the full 112-subject OpenNeuro study
