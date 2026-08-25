@@ -292,3 +292,52 @@ def across_run_ci(
         n_runs=n,
         runs_positive=int((per_run > 0).sum()),
     )
+
+
+def trend_test(
+    folds_by_x: dict[float, np.ndarray],
+    brain: Brain,
+    *,
+    subset: np.ndarray | None = None,
+    metric: str = "LI",
+    log_x: bool = True,
+) -> dict[str, tp.Any]:
+    """Does a metric grow along a complexity axis? Tested across held-out runs.
+
+    ``folds_by_x`` maps the axis value (training step, parameter count, ...) to
+    that model's ``(n_runs, n_voxels)`` per-fold map. For each run we fit a line
+    through its own points and test the 9 resulting slopes against zero.
+
+    This is much more powerful than asking whether each point separately differs
+    from zero, because every run contributes a *paired* comparison across the
+    axis: the run's own noise cancels out of its slope. It is the right test for
+    a claim of the form "X grows with model complexity".
+
+    ``metric`` is ``"LI"`` (paired lateralization over ``subset``) or
+    ``"mean_r"`` (overall encoding quality).
+    """
+    from scipy import stats
+
+    xs = sorted(folds_by_x)
+    x = np.log10(np.asarray(xs, float) + 1) if log_x else np.asarray(xs, float)
+    n_runs = next(iter(folds_by_x.values())).shape[0]
+
+    curve = np.zeros((n_runs, len(xs)))
+    for j, xv in enumerate(xs):
+        for i in range(n_runs):
+            r = folds_by_x[xv][i]
+            curve[i, j] = (
+                r.mean() if metric == "mean_r" else paired_lateralization(r, brain, subset).mean()
+            )
+
+    slopes = np.array([np.polyfit(x, curve[i], 1)[0] for i in range(n_runs)])
+    t, p = stats.ttest_1samp(slopes, 0)
+    return dict(
+        x=xs,
+        curve=curve.mean(0),
+        slope=float(slopes.mean()),
+        t=float(t),
+        p=float(p),
+        runs_positive=int((slopes > 0).sum()),
+        n_runs=n_runs,
+    )

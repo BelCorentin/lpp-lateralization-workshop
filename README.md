@@ -1,5 +1,7 @@
 # Le Petit Prince — LLM → fMRI encoding and left lateralization
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/BelCorentin/lpp-lateralization-workshop/blob/main/notebooks/lpp_lateralization.ipynb)
+
 A hands-on workshop replicating the core result of
 
 > Bonnasse-Gahot, L. & Pallier, C. (2024).
@@ -16,6 +18,15 @@ The pipeline in one line:
 ```
 LPP study  ->  word events  ->  LLM embeddings  ->  HRF convolution  ->  ridge (leave-one-run-out)  ->  per-voxel r  ->  left vs right
 ```
+
+## Quickest start: Colab
+
+Click the badge above. The first cell installs everything and downloads the
+data; nothing to set up, no GPU needed. You have a full brain map and a
+lateralization number in about **10 minutes**, most of it the one-off 700 MB
+download. The model sweeps in sections 7-8 add 30-40 minutes.
+
+Everything below is for running it on your own machine instead.
 
 ## 1. Install
 
@@ -75,8 +86,10 @@ jupyter lab notebooks/lpp_lateralization.ipynb
 
 `notebooks/lpp_lateralization.executed.ipynb` is the same notebook with every
 output filled in, so you can see where you should be landing before running
-anything. **Read `RESULTS.md` before presenting any of this** — the headline
-replicates, the scaling claim does not, and the reason matters.
+anything. **Read `RESULTS.md` before presenting any of this.** Short version: the
+lateralization replicates, and so does its growth *with training* (pythia-70m
+from random init to fully trained, p=0.003) — but not with model *size*, and
+the reason (which layer you read) matters.
 
 or, headless, the same analysis as a script:
 
