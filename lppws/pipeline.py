@@ -178,7 +178,28 @@ def encode_corr(
     alphas: np.ndarray = ALPHAS,
     per_fold: bool = False,
 ) -> np.ndarray:
+    """Leave-one-run-out ridge encoding from a prepared extractor.
+
+    See :func:`encode_corr_from_X` for the actual regression; this only builds
+    the design matrices first.
+    """
+    X = {tl: design_matrix(hrf, events, tl) for tl in timelines}
+    return encode_corr_from_X(X, timelines, bold, alphas=alphas, per_fold=per_fold)
+
+
+def encode_corr_from_X(
+    X: dict[str, np.ndarray],
+    timelines: list[str],
+    bold: dict[str, np.ndarray],
+    *,
+    alphas: np.ndarray = ALPHAS,
+    per_fold: bool = False,
+) -> np.ndarray:
     """Leave-one-run-out ridge encoding; per-voxel Pearson r.
+
+    ``X`` maps each timeline to its ``(n_TR, n_features)`` design matrix — either
+    freshly convolved, or loaded from the precomputed pack (see
+    :mod:`lppws.cached`).
 
     Returns ``(n_voxels,)`` averaged over folds, or ``(n_runs, n_voxels)`` when
     ``per_fold=True`` — the per-fold maps are what you need for an error bar
@@ -187,7 +208,6 @@ def encode_corr(
     The ridge penalty is selected by RidgeCV *inside* the training runs only, so
     the held-out run is never used for model selection.
     """
-    X = {tl: design_matrix(hrf, events, tl) for tl in timelines}
     r = np.zeros((len(timelines), next(iter(bold.values())).shape[1]))
     for i, test_tl in enumerate(timelines):
         xs, ys = zip(*(_align(X[tl], bold[tl]) for tl in timelines if tl != test_tl))

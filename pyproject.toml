@@ -14,6 +14,7 @@ dependencies = [
     "scipy>=1.11",
     "pandas>=2.2",
     "matplotlib>=3.8",
+    "plotly>=5.20",      # neuralset.events.viz returns plotly figures
     "ipykernel>=6.29",
 ]
 

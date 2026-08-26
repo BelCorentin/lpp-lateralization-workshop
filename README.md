@@ -22,9 +22,14 @@ LPP study  ->  word events  ->  LLM embeddings  ->  HRF convolution  ->  ridge (
 ## Quickest start: Colab
 
 Click the badge above. The first cell installs everything and downloads the
-data; nothing to set up, no GPU needed. You have a full brain map and a
-lateralization number in about **10 minutes**, most of it the one-off 700 MB
-download. The model sweeps in sections 7-8 add 30-40 minutes.
+data; nothing to set up, **no GPU needed**. The whole notebook — brain maps,
+model sweeps, statistics — runs end to end in **under 3 minutes** on a
+workstation, or roughly 10 on a free Colab box, plus the one-off 700 MB data
+download.
+
+That is possible because two expensive steps ship precomputed (see
+[Why it is fast](#why-it-is-fast) below). Everything that constitutes the
+*result* is still computed on your machine.
 
 Everything below is for running it on your own machine instead.
 
@@ -98,6 +103,35 @@ python verify.py                   # gpt2, static embeddings, ~2 min
 python verify.py '[["pythia-70m","EleutherAI/pythia-70m",true]]'
 ```
 
+## Why it is fast
+
+Two steps in this pipeline are slow and neither is where the science lives:
+
+1. **Running the language models.** Embedding 15,406 words *in context* takes a
+   couple of minutes per model on a GPU — and close to an hour per model on the
+   2-vCPU machine a free Colab session usually gives you. With eleven models
+   that is a non-starter.
+2. **Fitting the ridge.** 25,870 voxels x 9 folds is 40-120 s per configuration
+   on a 16-core box, several times that on a small VM, and there are fourteen
+   configurations.
+
+So the workshop downloads both: the HRF-convolved design matrices (41 MB) and
+the per-fold encoding maps (12 MB), from the `features-v1` release. Section 4
+still fits one model live, so the regression is not a black box, and every
+number the notebook *reports* — lateralization, across-run intervals, trend
+tests, every figure — is computed locally from those maps.
+
+The precomputed path reproduces the full GPU pipeline to five decimal places
+(p=0.00056 and p=0.0034 for the two training-axis trends, identical either way).
+Two switches in section 3 turn the shortcuts off:
+
+```python
+USE_PRECOMPUTED = False    # run the language models yourself (wants a GPU)
+FIT_SWEEPS_LIVE = True     # refit the ridge for all 14 configurations
+```
+
+Regenerate the packs with `tools_dump_features.py` and `tools_dump_folds.py`.
+
 ## What is in here
 
 | path | what |
@@ -109,6 +143,9 @@ python verify.py '[["pythia-70m","EleutherAI/pythia-70m",true]]'
 | `verify2.py` | same, keeping the per-run maps (for the across-run error bar) |
 | `RESULTS.md` | what the pipeline actually produced here, with the numbers |
 | `results/` | the raw measurements behind `RESULTS.md` |
+| `lppws/viz.py` | the word-timing figure (words on the fMRI sampling grid) |
+| `lppws/cached.py` | download + load the precomputed feature and result packs |
+| `tools_dump_*.py` | rebuild those packs from scratch |
 | `notebooks/lpp_lateralization.executed.ipynb` | the same notebook with all outputs, as a reference run |
 
 `Li2022PetitAverage` lives here rather than inside `neuralfetch` because the
